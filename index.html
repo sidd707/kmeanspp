@@ -1,0 +1,118 @@
+<!doctype html>
+<html>
+<head>
+	<title>kmeans test</title>
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.4/jquery.min.js"></script>
+	<script src="kmeanspp.js" type="text/javascript"></script>
+	<script type="text/javascript">
+var canvas, ctx, data;
+var colors = [
+	'hsl(0, 75%, 50%)',
+	'hsl(72, 75%, 50%)',
+	'hsl(144, 75%, 50%)',
+	'hsl(216, 75%, 50%)',
+	'hsl(288, 75%, 50%)',
+	'hsl(36, 100%, 75%)',
+	'hsl(108, 100%, 75%)',
+	'hsl(180, 100%, 75%)',
+	'hsl(252, 100%, 75%)',
+	'hsl(324, 100%, 75%)'
+]
+
+function Point(x, y) {
+	this.x = x;
+	this.y = y;
+}
+Point.prototype.toString = function() {
+	return '[' + this.x + ', ' + this.y + ']';
+}
+
+function rand(min, max) {
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function sqr(x) {
+	return x * x;
+}
+
+function dist(a, b) {
+	return Math.sqrt(sqr(b.x - a.x) + sqr(b.y - a.y));
+}
+
+function mean(set) {
+	var m = new Point(0, 0);
+	for(var i = 0; i < set.length; i++) {
+		m.x += set[i].x;
+		m.y += set[i].y;
+	}
+	m.x /= set.length;
+	m.y /= set.length;
+	return m;
+}
+
+function comp(a, b) {
+	if(a.x == b.x && a.y == b.y) {
+		return true;
+	}
+	return false;
+}
+
+function init() {
+	canvas = document.getElementById('canvas');
+	ctx = canvas.getContext('2d');
+	data = [];
+	for(var i = 0; i < document.getElementById('points').value; i++) {
+		var x = rand(0, 639);
+		var y = rand(0, 479);
+		data.push(new Point(x, y));
+	}
+	ctx.clearRect(0, 0, 640, 480);
+	draw(data, 2, 2, 'rgb(128,128,128)');
+}
+
+function run() {
+	kmeanspp.init(document.getElementById('k').value, data, dist, mean, comp);
+	var groups = kmeanspp.run();
+	ctx.clearRect(0, 0, 640, 480);
+	for(var i = 0; i < groups.length; i++) {
+		draw(groups[i], 2, 2, colors[i]);
+	}
+}
+
+function draw(data, width, height, fill) {
+	ctx.fillStyle = fill;
+	var adjustX = Math.floor(width / 2);
+	var adjustY = Math.floor(height / 2);
+	for(var i = 0; i < data.length; i++) {
+		ctx.fillRect(data[i].x - adjustX, data[i].y - adjustY, width, height);
+	}
+}
+
+function getCursorPosition(canvas, event) {
+	var x, y;
+
+	canoffset = $(canvas).offset();
+	x = event.clientX + document.body.scrollLeft + document.documentElement.scrollLeft - Math.floor(canoffset.left);
+	y = event.clientY + document.body.scrollTop + document.documentElement.scrollTop - Math.floor(canoffset.top) + 1;
+
+	return [x, y];
+}
+
+function newPoint(e) {
+	var loc = getCursorPosition('#canvas', e);
+	data.push(new Point(loc[0], loc[1]));
+	ctx.fillStyle = 'rgb(128,128,128)';
+	ctx.fillRect(loc[0] - 1, loc[1] - 1, 2, 2);
+}
+	</script>
+</head>
+
+<body onload="$('#canvas').click(newPoint); init()">
+	<input type="range" min="1" max="10" value="5" id="k" oninput="document.getElementById('k-value').innerHTML = this.value" /><span id="k-value">5</span>
+	<canvas id="canvas" style="display:block;background:black" width="640" height="480">
+	</canvas>
+	<input type="button" value="Run" onclick="run()" /><br />
+	<input type="button" value="Init" onclick="init()" /><input type="text" value="10000" id="points" />
+</body>
+
+</html>
